@@ -1,1 +1,3 @@
 build/
+dist/
+src/VonPylib.egg-info/
