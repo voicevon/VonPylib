@@ -1,5 +1,7 @@
 from setuptools import setup
 
+
+
 setup(
     name = 'VonPylib',
     version = '0.0.1',
@@ -8,6 +10,9 @@ setup(
                     "reprap_arm"],
     package_dir = {'': 'src'},
     # Optional
-    # author-email = 'voicevon@gmail.com',
+    author = 'Xuming Feng',
+    author_email = 'voicevon@gmail.com',
+    url = 'https://github.com/voicevon/VonPylib',
+
 
 )
