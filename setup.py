@@ -4,10 +4,13 @@ from setuptools import setup
 
 setup(
     name = 'VonPylib',
-    version = '0.0.1',
+    version = '0.0.3',
     description = 'My own python liberary',
     py_modules = ["terminal_font",
-                    "reprap_arm"],
+                    "reprap_arm",
+                    "mqtt_helper",
+                    "singleton"
+                    ],
     package_dir = {'': 'src'},
     # Optional
     author = 'Xuming Feng',
