@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 # pylib
-from common.singleton import Singleton
-from common.terminal_font import TerminalFont
+from singleton import Singleton
+from terminal_font import TerminalFont
 import cv2
 import logging
 
