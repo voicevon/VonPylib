@@ -5,6 +5,14 @@ import logging
 from von.singleton import Singleton
 from von.terminal_font import TerminalFont
 
+
+class MQTT_ConnectionConfig:
+    broker = 'voicevon.vicp.io'
+    port = 1883
+    uid = ''
+    password = ''
+    client_id = ''
+
 class MqttConfigableItem():
     topic = ''
     type = ''
@@ -47,15 +55,16 @@ class MqttHelper(metaclass=Singleton):
         else:
             print("Bad connection Returned code= ",rc)      
 
-    def connect_to_broker(self, client_id, broker, port, uid, psw):
-        self.client = mqtt.Client(client_id)  # create new instance
+    # def connect_to_broker(self, client_id, broker, port, uid, psw):
+    def connect_to_broker(self, config:MQTT_ConnectionConfig):
+        self.client = mqtt.Client(config.client_id)  # create new instance
         self.client.on_connect = self.on_connect  # binding call back function 
-        self.client.username_pw_set(username=uid, password=psw)
-        self.client.connect(broker, port=port)
+        self.client.username_pw_set(username=config.uid, password=config.password)
+        self.client.connect(config.broker, port=config.port)
         if self.client.is_connected():
-            print(self.__GREEN + '[Info]: MQTT has connected to: %s' % broker + self.__RESET)
+            print(self.__GREEN + '[Info]: MQTT has connected to: %s' % config.broker + self.__RESET)
         else:
-            print(self.__RED + '[Info]: MQTT has NOT!  connected to: %s, Is trying auto connect backgroundly.' % broker + self.__RESET)
+            print(self.__RED + '[Info]: MQTT has NOT!  connected to: %s, Is trying auto connect backgroundly.' % config.broker + self.__RESET)
 
         self.client.on_message = self.__on_message
         self.__do_debug_print_out = False
@@ -215,7 +224,10 @@ if __name__ == "__main__":
 
 
     # put this line to your system_setup()
-    g_mqtt.connect_to_broker('123456', 'voicevon.vicp.io', 1883, 'von','von1970')
+    config = MQTT_ConnectionConfig()
+    config.uid = ''
+    config.password = ''
+    g_mqtt.connect_to_broker(config)
     test_id =2
     if test_id ==1:
         # put this line to anywhere.
