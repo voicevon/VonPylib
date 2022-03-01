@@ -49,7 +49,7 @@ class MqttHelper(metaclass=Singleton):
         '''
         if rc==0:
             self.connected_flag=True #set flag
-            print("MQTT connected OK. Start subscribe.  Returned code=",rc)
+            logging.info(self.__GREEN + "MQTT connected OK. Start subscribe.  Returned code=" + self.__RESET,rc)
             #client.subscribe(topic)
             self.auto_subscribe()
         else:
@@ -64,7 +64,7 @@ class MqttHelper(metaclass=Singleton):
         if self.client.is_connected():
             print(self.__GREEN + '[Info]: MQTT has connected to: %s' % config.broker + self.__RESET)
         else:
-            print(self.__RED + '[Info]: MQTT has NOT!  connected to: %s, Is trying auto connect backgroundly.' % config.broker + self.__RESET)
+            print(self.__RED + '[Warn]: MQTT has NOT!  connected to: %s, Is trying auto connect backgroundly.' % config.broker + self.__RESET)
 
         self.client.on_message = self.__on_message
         self.__do_debug_print_out = False
