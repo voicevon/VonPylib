@@ -46,12 +46,13 @@ class RabbitMqAgent():
         except Exception as e:
             print(e)
 
+    #TODO:  exchange name shall be configable.
     def Publish(self, queue_name:str, payload:str):
-        if not (queue_name in self.declaed_queues):
-            self.channel.queue_declare(queue=queue_name)
-            self.declaed_queues.append(queue_name)
+        # if not (queue_name in self.declaed_queues):
+        #     self.channel.queue_declare(queue=queue_name)
+        #     self.declaed_queues.append(queue_name)
 
-        self.channel.basic_publish(exchange = '',
+        self.channel.basic_publish(exchange = 'twh',
                         routing_key = queue_name,
                         body = payload)
 
