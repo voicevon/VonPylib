@@ -1,4 +1,4 @@
-from mqtt_agent import g_mqtt, g_mqtt_broker_config
+from von.mqtt_agent import g_mqtt, g_mqtt_broker_config
 
 
 class MqttAutoSyncVar():
