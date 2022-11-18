@@ -1,4 +1,4 @@
-from mqtt_agent import g_mqtt, MQTT_BrokerConfig
+from mqtt_agent import g_mqtt, g_mqtt_broker_config
 
 
 class MqttAutoSyncVar():
@@ -21,7 +21,6 @@ class MqttAutoSyncVar():
         self.__on_sync_to_local_callback = callback
     
     def __on_mqtt_agent_received_message(self, mqtt_message_topic, mqtt_message_payload):
-        print('aaaaaaaaaaa')
         if mqtt_message_topic == self.mqtt_topic:
             self.remote_value = mqtt_message_payload
             if self.auto_sync_to_local:
@@ -38,41 +37,11 @@ class MqttAutoSyncVar():
         if self.__on_sync_to_local_callback != None:
             self.__on_sync_to_local_callback()
     
-class MqttAutoSyncer():
-    def __init__(self) -> None:
-        self.__auto_sync_vars = [MqttAutoSyncVar()]
 
-    def SyncAll_LocalToRemote(self):
-        for var in self.__auto_sync_vars:
-            var.Sync_LocalToRemote()
-    
-    def SyncAll_RemoteToLocal(self):
-        pass
-    # def __on_received_mqtt_message(self, client, userdata, message):
-    #     if self.__do_debug_print_out:
-    #         #print("MQTT message received ", str(message.payload.decode("utf-8")))
-    #         print("MQTT message topic=", message.topic)
-    #         print('MQTT message payload=', message.payload)
-    #         print("MQTT message qos=", message.qos)
-    #         print("MQTT message retain flag=", message.retain)
-    #     payload = str(message.payload.decode("utf-8"))
-    #     #Solution A:
-    #     for invoking in self.__on_message_callbacks:
-    #         invoking(message.topic, payload)
-    #     #Solution B:
-    #     self.update_from_topic(message.topic, payload)
 
 if __name__ == "__main__":
-    # class mqtt_config_test:
-    #     right = MqttAutoSyncVar(mqtt_topic='gobot/test/right', default_value=1, var_data_type='string')
-    #     left = MqttAutoSyncVar('gobot/test/left',2)
-    #     hello = MqttAutoSyncVar('gobot/test/hello','Hello World')
 
-
-
-    # put this line to your system_setup()
-    mqtt_broker_config = MQTT_BrokerConfig()
-    g_mqtt.connect_to_broker(mqtt_broker_config)
+    g_mqtt.connect_to_broker(g_mqtt_broker_config)
     while not g_mqtt.paho_mqtt_client.is_connected():
         pass
     print("connected to mqtt broker.......")
@@ -88,10 +57,11 @@ if __name__ == "__main__":
     
     if test_id == 2:
         var_hello =  MqttAutoSyncVar(mqtt_topic='test/auto_sync/hello', default_value='hello', var_data_type='str')
-        # g_mqtt.append_auto_sync_var(var_hello)
+        
         print (var_hello.default_value)
         print (var_hello.remote_value)
-        print("With any MQTT client, publish a message :  topic='test/auto_sync/hello', payload='aaabbb'")
+        var_hello.Sync_LocalToRemote()
+        print("Test Instruction: With any MQTT client, publish a message :  topic='test/auto_sync/hello', payload='aaabbb'")
         while var_hello.local_value == 'hello':
             pass
         print (var_hello.local_value)
