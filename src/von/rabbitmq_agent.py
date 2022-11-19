@@ -26,10 +26,19 @@ class RabbitMqAgent():
     def connect_to_broker(self, broker_config: AMQ_BrokerConfig) -> None:
         self.serverConfig = broker_config
         self.reconnect_to_broker()
+        self.prefeched_message = None
+        self.delivery_tag = None
         # self.blocking_connection = None
 
     def SpinOnce(self):
         self.blocking_connection.process_data_events()
+    
+    def FetchMessage(self) -> str:
+        result = self.prefeched_message
+        if self.prefeched_message is not None:
+            self.channel.basic_ack(delivery_tag=self.delivery_tag)
+            self.prefeched_message = None
+        return result
 
     def reconnect_to_broker(self):
         broker_config = self.serverConfig
@@ -46,13 +55,12 @@ class RabbitMqAgent():
         except Exception as e:
             print(e)
 
-    #TODO:  exchange name shall be configable.
-    def Publish(self, queue_name:str, payload:str):
+    def Publish(self, exchange_name: str, queue_name: str, payload: str):
         # if not (queue_name in self.declaed_queues):
         #     self.channel.queue_declare(queue=queue_name)
         #     self.declaed_queues.append(queue_name)
 
-        self.channel.basic_publish(exchange = 'twh',
+        self.channel.basic_publish(exchange = exchange_name,
                         routing_key = queue_name,
                         body = payload)
 
@@ -89,9 +97,10 @@ class RabbitMqAgent():
         # self.channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-    def Subscribe(self, queue_name:str, callback):
+    def Subscribe(self, queue_name:str, callback=None):
         '''
         call back examole def callback_main(self, ch, method, properties, body):
+        If using FetchMessage(), ignore the callback
         '''
         if not (queue_name in self.declaed_queues):
             ret = self.channel.queue_declare(queue=queue_name, durable=True)
@@ -100,7 +109,7 @@ class RabbitMqAgent():
         var_callback = callback
         if callback is None:
             var_callback = self.callback_example
-        self.channel.basic_consume(queue=queue_name, on_message_callback=var_callback, auto_ack=True)
+        self.channel.basic_consume(queue=queue_name, on_message_callback=var_callback, auto_ack=False)
 
     def RabbitMQ_publish_tester(self):
         i = 0
