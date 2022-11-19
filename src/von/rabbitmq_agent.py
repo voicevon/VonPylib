@@ -51,6 +51,7 @@ class RabbitMqAgent():
             print("Start to connect to RabbitMQ broker.")
             self.blocking_connection = pika.BlockingConnection(parameters)
             self.channel = self.blocking_connection.channel()
+            self.channel.basic_qos(prefetch_count=1)
             print("Connected RabbitMQ broker!")
         except Exception as e:
             print(e)
@@ -92,9 +93,11 @@ class RabbitMqAgent():
                         routing_key = queue_name,
                         body = img_pub)
 
-    def callback_example(self, ch, method, properties, body):
-        print('RabbitMqAgent::callback_example()  mq Received ' ,  method.routing_key, body)
+    def CopyToFetchedMessage(self, ch, method, properties, body):
+        # print('RabbitMqAgent::callback_example()  mq Received ' ,  method.routing_key, body)
         # self.channel.basic_ack(delivery_tag=method.delivery_tag)
+        self.prefeched_message = body
+        self.delivery_tag = method.delivery_tag
 
 
     def Subscribe(self, queue_name:str, callback=None):
@@ -103,12 +106,12 @@ class RabbitMqAgent():
         If using FetchMessage(), ignore the callback
         '''
         if not (queue_name in self.declaed_queues):
-            ret = self.channel.queue_declare(queue=queue_name, durable=True)
+            self.channel.queue_declare(queue=queue_name, durable=True)
             self.declaed_queues.append(queue_name)
 
         var_callback = callback
         if callback is None:
-            var_callback = self.callback_example
+            var_callback = self.CopyToFetchedMessage
         self.channel.basic_consume(queue=queue_name, on_message_callback=var_callback, auto_ack=False)
 
     def RabbitMQ_publish_tester(self):
@@ -125,19 +128,21 @@ class RabbitMqAgent():
             time.sleep(2)
 
 
-def callback_example_app(self, ch, method, properties, body):
-        print('RabbitMqAgent::callback_example_app()  mq Received ' ,  method.routing_key, body)
-        self.channel.basic_ack(delivery_tag=method.delivery_tag)
 
 if __name__ == '__main__':
     g_amq = RabbitMqAgent()
     amq_broke_config = AMQ_BrokerConfig()
     g_amq.connect_to_broker(amq_broke_config)
 
-    img = cv2.imread("nocommand.jpg")
-    g_amq.publish_cv_image("test" , img)
+    # img = cv2.imread("nocommand.jpg")
+    # g_amq.publish_cv_image("test" , img)
 
-    g_amq.Subscribe(queue_name='twh_221109_request',callback=None )
+    g_amq.Subscribe(queue_name='twh_221109_request')
     while True:
         g_amq.SpinOnce()
+        xx = g_amq.FetchMessage()
+        if xx is not None:
+            print(xx)
+            time.sleep(1)
+
     
