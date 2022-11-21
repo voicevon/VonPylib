@@ -23,17 +23,21 @@ class RabbitMq_Subscriber():
         self.delivery_tag = 0
 
     def CopyToFetchedMessage(self, ch, method, properties, body):
-        print(method ,'\n',  method.routing_key,'\n', body)
+        # print(ch, method ,'\n',  method.routing_key,'\n',  properties, '\n', body)
+        # print('\n\n\n', properties)
 
         # self.channel.basic_ack(delivery_tag=method.delivery_tag)
         self.channel = ch
-        self.prefeched_message = body
-        self.delivery_tag = method.delivery_tag
+        if self.prefeched_message is None:
+            self.delivery_tag = method.delivery_tag
+            self.channel.basic_ack(delivery_tag=self.delivery_tag)
+            self.prefeched_message = body
 
     def FetchMessage(self) -> str:
         result = self.prefeched_message
         if self.prefeched_message is not None:
-            self.channel.basic_ack(delivery_tag=self.delivery_tag)
+            # self.channel.basic_ack(delivery_tag=self.delivery_tag)
+            # print('act to brocker')
             self.prefeched_message = None
         return result
 
@@ -54,8 +58,8 @@ class RabbitMqAgent():
         self.delivery_tag = None
         # self.blocking_connection = None
 
-    def SpinOnce(self):
-        self.blocking_connection.process_data_events()
+    def SpinOnce(self, time_limit=0.1):
+        self.blocking_connection.process_data_events(time_limit)
     
     # def FetchMessage(self) -> str:
     #     result = self.prefeched_message
@@ -124,8 +128,10 @@ class RabbitMqAgent():
         return None
 
     def fetch_message(self, queue_name:str) -> str:
+        # self.SpinOnce()
         subscriber = self.__FindSubscriber(queue_name)
         if subscriber is None:
+            print("no subscriber is found")
             return None
         else:
             return subscriber.FetchMessage()
@@ -180,18 +186,25 @@ if __name__ == '__main__':
 
     g_amq.Subscribe(queue_name='twh_221109_deposit')
     g_amq.Subscribe(queue_name='twh_221109_withdraw')
+    count = 0
     while True:
         g_amq.SpinOnce()
-        xx = g_amq.fetch_message('twh_221109_deposit')
-        # xx = ss.FetchMessage()
-        if xx is not None:
-            print(xx)
-            # time.sleep(1)
+        # time.sleep(0.9)
+        # xx = g_amq.fetch_message('twh_221109_deposit')
+        # # xx = ss.FetchMessage()
+        # if xx is not None:
+        #     print(xx)
+        #     # time.sleep(1)
 
         xx = g_amq.fetch_message('twh_221109_withdraw')
         if xx is not None:
-            print(xx)
-            time.sleep(1)
+            if count>1:
+                print("withdraw is empty................................", count)
+            count =0
+            # print(xx)
+            # time.sleep(1)
+        else:
+            count += 1
 
 
     
