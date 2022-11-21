@@ -190,18 +190,18 @@ if __name__ == '__main__':
     while True:
         g_amq.SpinOnce()
         # time.sleep(0.9)
-        # xx = g_amq.fetch_message('twh_221109_deposit')
-        # # xx = ss.FetchMessage()
-        # if xx is not None:
-        #     print(xx)
-        #     # time.sleep(1)
+        xx = g_amq.fetch_message('twh_221109_deposit')
+        # xx = ss.FetchMessage()
+        if xx is not None:
+            print(xx)
+            # time.sleep(1)
 
         xx = g_amq.fetch_message('twh_221109_withdraw')
         if xx is not None:
             if count>1:
                 print("withdraw is empty................................", count)
             count =0
-            # print(xx)
+            print(xx)
             # time.sleep(1)
         else:
             count += 1
