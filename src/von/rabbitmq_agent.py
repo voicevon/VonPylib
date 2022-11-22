@@ -174,10 +174,10 @@ class RabbitMqAgent():
             i += 1  
             time.sleep(2)
 
+g_amq = RabbitMqAgent()
 
 
 if __name__ == '__main__':
-    g_amq = RabbitMqAgent()
     amq_broke_config = AMQ_BrokerConfig()
     g_amq.connect_to_broker(amq_broke_config)
 
