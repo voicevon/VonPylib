@@ -8,9 +8,9 @@ class MqttAutoSyncVar():
         self.default_value = default_value
         self.remote_value = None
         self.local_value = default_value
-        self.auto_sync_to_local = True
-        self.auto_sync_to_remote = True
-        self.__on_sync_to_local_callback = None
+        self.auto_copy_to_local = False
+        self.auto_copy_to_remote = False
+        self.__on_copy_to_local_callback = None
         g_mqtt.subscribe(self.mqtt_topic)
         g_mqtt.append_on_received_message_callback(self.__on_mqtt_agent_received_message)
 
@@ -18,24 +18,24 @@ class MqttAutoSyncVar():
         '''
         This is optional , if the app want to get local update informing immediately.
         '''
-        self.__on_sync_to_local_callback = callback
+        self.__on_copy_to_local_callback = callback
     
     def __on_mqtt_agent_received_message(self, mqtt_message_topic, mqtt_message_payload):
         if mqtt_message_topic == self.mqtt_topic:
             self.remote_value = mqtt_message_payload
-            if self.auto_sync_to_local:
-                self.Sync_RemoteToLocal()
+            if self.auto_copy_to_local:
+                self.Copy_RemoteToLocal()
 
 
 
-    def Sync_LocalToRemote(self):
+    def Copy_LocalToRemote(self):
         if self.local_value != self.remote_value:
             g_mqtt.publish(self.mqtt_topic, self.local_value)
 
-    def Sync_RemoteToLocal(self):
+    def Copy_RemoteToLocal(self):
         self.local_value = self.remote_value
-        if self.__on_sync_to_local_callback != None:
-            self.__on_sync_to_local_callback()
+        if self.__on_copy_to_local_callback != None:
+            self.__on_copy_to_local_callback()
     
 
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     print("connected to mqtt broker.......")
 
 
-    test_id = 2
+    test_id = 3
     if test_id == 1:
         # put this line to anywhere.
         g_mqtt.publish('test/auto_sync/age', 6)
@@ -58,11 +58,18 @@ if __name__ == "__main__":
     if test_id == 2:
         var_hello =  MqttAutoSyncVar(mqtt_topic='test/auto_sync/hello', default_value='hello', var_data_type='str')
         
-        print (var_hello.default_value)
-        print (var_hello.remote_value)
-        var_hello.Sync_LocalToRemote()
-        print("Test Instruction: With any MQTT client, publish a message :  topic='test/auto_sync/hello', payload='aaabbb'")
+        print ('default value=', var_hello.default_value)
+        print ('remote value=', var_hello.remote_value)
+        var_hello.Copy_LocalToRemote()
+        var_hello.auto_copy_to_local=True
+        print("Instruction 1/2: With any MQTT client, publish a message :  topic='test/auto_sync/hello', payload='aaabbb'")
         while var_hello.local_value == 'hello':
             pass
         print (var_hello.local_value)
+        print("Instruction 2/2: Watch this topic,  Run this tester again, should see the payload becomes default value")
 
+    if test_id == 3:
+        ir_state = MqttAutoSyncVar(mqtt_topic="twh/" + str(221109) + "/ir_state",  default_value="unknown")
+        while True:
+            print (ir_state.remote_value)
+        
