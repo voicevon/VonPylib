@@ -184,26 +184,28 @@ if __name__ == '__main__':
     # img = cv2.imread("nocommand.jpg")
     # g_amq.publish_cv_image("test" , img)
 
-    g_amq.Subscribe(queue_name='twh_221109_deposit')
-    g_amq.Subscribe(queue_name='twh_221109_withdraw')
+    g_amq.Subscribe(queue_name='twh_deposit')
+    g_amq.Subscribe(queue_name='twh_withdraw')
     count = 0
     while True:
         g_amq.SpinOnce()
+        g_amq.SpinOnce()
         # time.sleep(0.9)
-        xx = g_amq.fetch_message('twh_221109_deposit')
+        xx = g_amq.fetch_message('twh_deposit')
         # xx = ss.FetchMessage()
         if xx is not None:
             print(xx)
             # time.sleep(1)
 
-        xx = g_amq.fetch_message('twh_221109_withdraw')
+        xx = g_amq.fetch_message('twh_withdraw')
         if xx is not None:
             if count>1:
                 print("withdraw is empty................................", count)
             count =0
             print(xx)
-            # time.sleep(1)
+            time.sleep(1)
         else:
+            print("fetched   None")
             count += 1
 
 
