@@ -26,32 +26,13 @@ class RabbitMq_Message():
 class RabbitMq_Subscriber():
     def __init__(self, queue_name: str) -> None:
         self.queue_name = queue_name
-        # self.channel = None
-        # self.prefeched_message = None
         self.unacked_messages = []
-        # self.delivery_tag = 0
-        # self.pre_prefetched_message = None
 
     def CopyToFetchedMessage(self, ch, method, properties, body):
-        # print(ch, method ,'\n',  method.routing_key,'\n',  properties, '\n', body)
-        # print('\n\n\n', properties)
-
-        # self.channel.basic_ack(delivery_tag=method.delivery_tag)
         unacked = RabbitMq_Message(ch,method,body)
         self.unacked_messages.append(unacked)
-        # self.channel = ch
-        # if self.prefeched_message is None:
-        #     # act right now.
-        #     self.delivery_tag = method.delivery_tag
-        #     self.channel.basic_ack(delivery_tag=self.delivery_tag)
-        #     self.prefeched_message = body
-        # else:
-        #     # TODO: act later
-        #     self.delivery_tag = method.delivery_tag  
-        #     self.pre_prefetched_message = body
 
     def FetchMessage(self) -> str:
-        # print('len(unacked_messages)= ', len(self.unacked_messages))
         if len(self.unacked_messages) > 0:
             result = self.unacked_messages[0].body
             ch = self.unacked_messages[0].ch
@@ -61,44 +42,25 @@ class RabbitMq_Subscriber():
             # print('poped')
         else:
             result = None
-
-        # print('result=', result)
         return result
-        # result = self.prefeched_message
-        
-        # if self.prefeched_message is not None:
-        #     # self.channel.basic_ack(delivery_tag=self.delivery_tag)
-        #     # print('act to brocker')
-        #     self.prefeched_message = None
-        # return result
 
 class RabbitMqAgent():
     '''
     To learn:  What is channel indeed ?
     '''
     def __init__(self) -> None:
-        # self.declaed_queues=[]
         self.subscribers=[RabbitMq_Subscriber('Nothing')]
         self.subscribers.clear
-        self.prefeched_message = None
 
     def connect_to_broker(self, broker_config: AMQ_BrokerConfig) -> None:
         self.serverConfig = broker_config
         self.reconnect_to_broker()
         self.prefeched_message = None
         self.delivery_tag = None
-        # self.blocking_connection = None
 
-    def process_data_events(self, time_limit=0.1):
-        # self.blocking_connection.process_data_events(time_limit)
-        self.blocking_connection.process_data_events(time_limit=0)
+    def process_data_events(self, time_limit=0):
+        self.blocking_connection.process_data_events(time_limit)
     
-    # def FetchMessage(self) -> str:
-    #     result = self.prefeched_message
-    #     if self.prefeched_message is not None:
-    #         self.channel.basic_ack(delivery_tag=self.delivery_tag)
-    #         self.prefeched_message = None
-    #     return result
 
     def reconnect_to_broker(self):
         broker_config = self.serverConfig
@@ -160,7 +122,6 @@ class RabbitMqAgent():
         return None
 
     def fetch_message(self, queue_name:str) -> str:
-        # self.SpinOnce()
         subscriber = self.__FindSubscriber(queue_name)
         if subscriber is None:
             print("no subscriber is found")
@@ -168,29 +129,17 @@ class RabbitMqAgent():
         else:
             return subscriber.FetchMessage()
 
-    # def CopyToFetchedMessage(self, ch, method, properties, body):
-    #     # print('RabbitMqAgent::callback_example()  mq Received ' ,  method.routing_key, body)
-    #     # self.channel.basic_ack(delivery_tag=method.delivery_tag)
-    #     self.prefeched_message = body
-    #     self.delivery_tag = method.delivery_tag
-
-
     def Subscribe(self, queue_name:str, callback=None):
         '''
         call back examole def callback_main(self, ch, method, properties, body):
         If using FetchMessage(), ignore the callback
         '''
-        # if not (queue_name in self.declaed_queues):
-            # self.channel.queue_declare(queue=queue_name, durable=True)
-            # self.declaed_queues.append(queue_name)
         new_subscriber = RabbitMq_Subscriber(queue_name)
         new_subscriber.channel = self.channel
         self.subscribers.append(new_subscriber)
         var_callback = callback
         if callback is None:
-            # var_callback = self.CopyToFetchedMessage
             var_callback = new_subscriber.CopyToFetchedMessage
-        # self.channel.basic_consume(queue=queue_name, on_message_callback=var_callback, auto_ack=False)
         new_subscriber.channel.basic_consume(queue=queue_name, on_message_callback=var_callback, auto_ack=False)
 
     def RabbitMQ_publish_tester(self):
