@@ -15,31 +15,62 @@ class AMQ_BrokerConfig:
     uid = 'von'
     password = 'von1970'
 
+
+class RabbitMq_Message():
+
+    def __init__(self, ch, method, body) -> None:
+        self.ch = ch
+        self.method = method
+        self.body = body
+
 class RabbitMq_Subscriber():
     def __init__(self, queue_name: str) -> None:
         self.queue_name = queue_name
-        self.channel = None
-        self.prefeched_message = None
-        self.delivery_tag = 0
+        # self.channel = None
+        # self.prefeched_message = None
+        self.unacked_messages = []
+        # self.delivery_tag = 0
+        # self.pre_prefetched_message = None
 
     def CopyToFetchedMessage(self, ch, method, properties, body):
         # print(ch, method ,'\n',  method.routing_key,'\n',  properties, '\n', body)
         # print('\n\n\n', properties)
 
         # self.channel.basic_ack(delivery_tag=method.delivery_tag)
-        self.channel = ch
-        if self.prefeched_message is None:
-            self.delivery_tag = method.delivery_tag
-            self.channel.basic_ack(delivery_tag=self.delivery_tag)
-            self.prefeched_message = body
+        unacked = RabbitMq_Message(ch,method,body)
+        self.unacked_messages.append(unacked)
+        # self.channel = ch
+        # if self.prefeched_message is None:
+        #     # act right now.
+        #     self.delivery_tag = method.delivery_tag
+        #     self.channel.basic_ack(delivery_tag=self.delivery_tag)
+        #     self.prefeched_message = body
+        # else:
+        #     # TODO: act later
+        #     self.delivery_tag = method.delivery_tag  
+        #     self.pre_prefetched_message = body
 
     def FetchMessage(self) -> str:
-        result = self.prefeched_message
-        if self.prefeched_message is not None:
-            # self.channel.basic_ack(delivery_tag=self.delivery_tag)
-            # print('act to brocker')
-            self.prefeched_message = None
+        # print('len(unacked_messages)= ', len(self.unacked_messages))
+        if len(self.unacked_messages) > 0:
+            result = self.unacked_messages[0].body
+            ch = self.unacked_messages[0].ch
+            tag = self.unacked_messages[0].method.delivery_tag
+            ch.basic_ack(tag)
+            self.unacked_messages.pop(0)
+            # print('poped')
+        else:
+            result = None
+
+        # print('result=', result)
         return result
+        # result = self.prefeched_message
+        
+        # if self.prefeched_message is not None:
+        #     # self.channel.basic_ack(delivery_tag=self.delivery_tag)
+        #     # print('act to brocker')
+        #     self.prefeched_message = None
+        # return result
 
 class RabbitMqAgent():
     '''
@@ -58,8 +89,9 @@ class RabbitMqAgent():
         self.delivery_tag = None
         # self.blocking_connection = None
 
-    def SpinOnce(self, time_limit=0.1):
-        self.blocking_connection.process_data_events(time_limit)
+    def process_data_events(self, time_limit=0.1):
+        # self.blocking_connection.process_data_events(time_limit)
+        self.blocking_connection.process_data_events(time_limit=0)
     
     # def FetchMessage(self) -> str:
     #     result = self.prefeched_message
@@ -79,7 +111,7 @@ class RabbitMqAgent():
             print("Start to connect to RabbitMQ broker.")
             self.blocking_connection = pika.BlockingConnection(parameters)
             self.channel = self.blocking_connection.channel()
-            self.channel.basic_qos(prefetch_count=1)
+            self.channel.basic_qos(prefetch_count=10)
             print("Connected RabbitMQ broker!")
         except Exception as e:
             print(e)
@@ -187,26 +219,28 @@ if __name__ == '__main__':
     g_amq.Subscribe(queue_name='twh_deposit')
     g_amq.Subscribe(queue_name='twh_withdraw')
     count = 0
+    g_amq.process_data_events()
     while True:
-        g_amq.SpinOnce()
-        g_amq.SpinOnce()
+        g_amq.process_data_events()
+        g_amq.process_data_events()
         # time.sleep(0.9)
         xx = g_amq.fetch_message('twh_deposit')
         # xx = ss.FetchMessage()
         if xx is not None:
             print(xx)
-            # time.sleep(1)
+            time.sleep(1)
 
         xx = g_amq.fetch_message('twh_withdraw')
         if xx is not None:
+            # g_amq.process_data_events()
             if count>1:
                 print("withdraw is empty................................", count)
             count =0
-            print(xx)
-            time.sleep(1)
+            # print('final fetchd.', xx)
         else:
-            print("fetched   None")
+            # print("fetched   None", count)
             count += 1
+        # time.sleep(1)
 
 
     
