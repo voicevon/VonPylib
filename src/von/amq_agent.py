@@ -16,20 +16,20 @@ class AMQ_BrokerConfig:
     password = 'von1970'
 
 
-class RabbitMq_Message():
+class Amq_Message():
 
     def __init__(self, ch, method, body) -> None:
         self.ch = ch
         self.method = method
         self.body = body
 
-class RabbitMq_Subscriber():
+class Amq_Subscriber():
     def __init__(self, queue_name: str) -> None:
         self.queue_name = queue_name
         self.unacked_messages = []
 
     def CopyToFetchedMessage(self, ch, method, properties, body):
-        unacked = RabbitMq_Message(ch,method,body)
+        unacked = Amq_Message(ch,method,body)
         self.unacked_messages.append(unacked)
 
     def FetchMessage(self) -> str:
@@ -44,12 +44,12 @@ class RabbitMq_Subscriber():
             result = None
         return result
 
-class RabbitMqAgent():
+class AmqAgent():
     '''
     To learn:  What is channel indeed ?
     '''
     def __init__(self) -> None:
-        self.subscribers=[RabbitMq_Subscriber('Nothing')]
+        self.subscribers=[Amq_Subscriber('Nothing')]
         self.subscribers.clear
 
     def connect_to_broker(self, broker_config: AMQ_BrokerConfig) -> None:
@@ -115,13 +115,13 @@ class RabbitMqAgent():
                         routing_key = queue_name,
                         body = img_pub)
 
-    def __FindSubscriber(self, queue_name:str) -> RabbitMq_Subscriber:
+    def __FindSubscriber(self, queue_name:str) -> Amq_Subscriber:
         for subscriber in self.subscribers:
             if subscriber.queue_name == queue_name:
                 return subscriber
         return None
 
-    def fetch_message(self, queue_name:str) -> str:
+    def fetch_message_payload(self, queue_name:str) -> str:
         subscriber = self.__FindSubscriber(queue_name)
         if subscriber is None:
             print("no subscriber is found")
@@ -134,7 +134,7 @@ class RabbitMqAgent():
         call back examole def callback_main(self, ch, method, properties, body):
         If using FetchMessage(), ignore the callback
         '''
-        new_subscriber = RabbitMq_Subscriber(queue_name)
+        new_subscriber = Amq_Subscriber(queue_name)
         new_subscriber.channel = self.channel
         self.subscribers.append(new_subscriber)
         var_callback = callback
@@ -155,7 +155,7 @@ class RabbitMqAgent():
             i += 1  
             time.sleep(2)
 
-g_amq = RabbitMqAgent()
+g_amq = AmqAgent()
 g_amq_broke_config = AMQ_BrokerConfig()
 
 
@@ -173,13 +173,13 @@ if __name__ == '__main__':
         g_amq.process_data_events()
         g_amq.process_data_events()
         # time.sleep(0.9)
-        xx = g_amq.fetch_message('twh_deposit')
+        xx = g_amq.fetch_message_payload('twh_deposit')
         # xx = ss.FetchMessage()
         if xx is not None:
             print(xx)
             time.sleep(1)
 
-        xx = g_amq.fetch_message('twh_withdraw')
+        xx = g_amq.fetch_message_payload('twh_withdraw')
         if xx is not None:
             # g_amq.process_data_events()
             if count>1:

@@ -133,8 +133,8 @@ class MqttAgent(metaclass=Singleton):
             byte_im = f.read()
         self.paho_mqtt_client.publish('sower/img/bin',byte_im )
 
-    def publish(self, topic, value):
-        self.paho_mqtt_client.publish(topic, value, qos=2, retain =True)
+    def publish(self, topic, payload):
+        self.paho_mqtt_client.publish(topic, payload, qos=2, retain =True)
     
 
 g_mqtt_broker_config = MQTT_BrokerConfig()
