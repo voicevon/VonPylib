@@ -13,10 +13,50 @@ class MQTT_BrokerConfig:
     password = 'von1970'
     client_id = 'test_22111815'
 
+class MqttAgent_ReceivedMessage():
+    def __init__(self, topic, payload):
+        self.topic = topic
+        self.payload = payload
+        self.updated = True
+    
+class MqttAgent_ReceivedDiction():
+    def __init__(self) -> None:
+        self.__newest_message = [MqttAgent_ReceivedMessage('','')]
+
+    def FindItem(self, topic) -> MqttAgent_ReceivedMessage:
+        for message in self.__newest_message:
+            if message.topic == topic:
+                return message
+        return None
+
+    def OnReceivedMessage(self, topic, payload):
+        item = self.FindItem(topic)
+        if item is None:
+            new_message = MqttAgent_ReceivedMessage(topic, payload)
+            self.__newest_message.append(new_message)
+        else:
+            item.payload = payload
+            item.updated = True
+
+    def has_updated_payload(self, topic) -> bool:
+        item = self.FindItem(topic)
+        return item.updated
+
+    def FetchPayload(self, topic):
+        item = self.FindItem(topic)
+        if item is None:
+            return None
+        else:
+            item.updated = False
+            return item.payload
 
 
 class MqttAgent(metaclass=Singleton):
-
+    '''
+    When received a message, There are two ways to get it:
+    1.  set a __on_message_callbacks().   Note:  Not in main thread.
+    2.  MqttAgent().RxBuffer.FetchPayload() 
+    '''
     def __init__(self):
         self.paho_mqtt_client = None
 
@@ -26,6 +66,9 @@ class MqttAgent(metaclass=Singleton):
         self.__RESET = TerminalFont.Color.Control.reset
         self.__on_message_callbacks = []
         self.__do_debug_print_out = True
+        self.RxBuffer = MqttAgent_ReceivedDiction()
+
+        
 
     def _on_phao_mqtt_client_connected_callback(self, client, userdata, flags, rc):
         if rc == 0:
@@ -47,6 +90,7 @@ class MqttAgent(metaclass=Singleton):
         payload = str(message.payload.decode("utf-8"))
         for invoking in self.__on_message_callbacks:
             invoking(message.topic, payload)
+        self.RxBuffer.OnReceivedMessage(message.topic, message.payload)
 
     def connect_to_broker(self, config: MQTT_BrokerConfig) -> mqtt.Client:
         self.paho_mqtt_client = mqtt.Client(config.client_id)  # create new instance
@@ -74,6 +118,8 @@ class MqttAgent(metaclass=Singleton):
 
     def subscribe(self, topic, qos=0):
         self.paho_mqtt_client.subscribe(topic, qos)
+        self.RxBuffer.OnReceivedMessage(topic, "")
+
 
     def publish_cv_image(self, topic, cv_image, retain=True):
       # return image as mqtt message payload
@@ -93,6 +139,19 @@ class MqttAgent(metaclass=Singleton):
 
 g_mqtt_broker_config = MQTT_BrokerConfig()
 g_mqtt = MqttAgent()
+
+if __name__ == "__main__":
+    test_topic = "twh/221109/gcode_feed"
+    g_mqtt.connect_to_broker(g_mqtt_broker_config)
+    g_mqtt.subscribe(test_topic)
+    count = 0
+    while True:
+        rx = g_mqtt.RxBuffer
+        if rx.has_updated_payload(test_topic):
+            payload = rx.FetchPayload(test_topic)
+            print(count, payload)
+            count += 1
+        
 
 
 
