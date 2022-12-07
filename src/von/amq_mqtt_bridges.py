@@ -31,7 +31,11 @@ class AmqMqtt_Bridges():
         self.all_bridges = [AmqMqtt_Bridge('test','test')]
 
 
-    def Append(self, amq_queue_name, mqtt_publish_topic):
+    def Append(self, amq_queue_name:str):
+        '''
+        amq_queue_name should not contain '_'
+        '''
+        mqtt_publish_topic = amq_queue_name.replace("_", "/")
         new_bridge = AmqMqtt_Bridge(amq_queue_name, mqtt_publish_topic)
         self.all_bridges.append(new_bridge)
 
@@ -47,7 +51,7 @@ if __name__ == '__main__':
     print("connected to mqtt broker.......")
 
     a = AmqMqtt_Bridges()
-    a.Append('twh_221109_gcode','twh/221109/gcode_feed')
+    a.Append('twh_221109_gcode','twh/221109/gcode')
     while True:
         g_amq.process_data_events()
         a.spin_once()
