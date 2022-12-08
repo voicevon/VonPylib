@@ -65,7 +65,7 @@ class MqttAgent(metaclass=Singleton):
         self.__RED = TerminalFont.Color.Fore.red
         self.__RESET = TerminalFont.Color.Control.reset
         self.__on_message_callbacks = []
-        self.__do_debug_print_out = True
+        self.__do_debug_print_out = False
         self.RxBuffer = MqttAgent_ReceivedDiction()
 
         
