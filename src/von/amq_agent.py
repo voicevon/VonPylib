@@ -54,6 +54,10 @@ class AmqAgent():
         self.delivery_tag = None
 
     def process_data_events(self, time_limit=0):
+        if self.channel.connection.is_closed:
+            print("AmqAgent::process_data_events()  Connection is closed. Trying to reconnect ")
+            input("press any key to reconnect")
+            self.reconnect_to_broker()
         self.blocking_connection.process_data_events(time_limit)
 
     def reconnect_to_broker(self):
