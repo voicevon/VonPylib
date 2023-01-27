@@ -5,14 +5,9 @@ class RemoteVar_mqtt():
     def __init__(self, mqtt_topic: str, default_value):
         self.__mqtt_topic = mqtt_topic
         self.__value = default_value
-        # self.__default_value = default_value
-        # self.remote_value = None
-        # self.local_value = default_value
-        # self.auto_copy_to_local = False
-        # self.auto_copy_to_remote = False
-        # self.__on_copy_to_local_callback = None
-        g_mqtt.subscribe(self.__mqtt_topic)
+        g_mqtt.publish(mqtt_topic, default_value)
         g_mqtt.append_on_received_message_callback(self.__on_mqtt_agent_received_message)
+        g_mqtt.subscribe(mqtt_topic)
 
     def set(self, new_value):
         if new_value != self.__value:
