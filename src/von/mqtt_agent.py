@@ -87,9 +87,18 @@ class MqttAgent(metaclass=Singleton):
             print('MQTT message payload=', message.payload)
             print("MQTT message qos=", message.qos)
             print("MQTT message retain flag=", message.retain)
-        payload = str(message.payload.decode("utf-8"))
+        is_utf_8 = False
+        try:
+            payload = str(message.payload.decode("utf-8"))
+            is_utf_8 = True
+        except:
+            pass
+        
         for invoking in self.__on_message_callbacks:
-            invoking(message.topic, payload)
+            if is_utf_8:
+                invoking(message.topic, payload)
+            else:
+                invoking(message.topic, message.payload)
         self.RxBuffer.OnReceivedMessage(message.topic, message.payload)
 
     def connect_to_broker(self, config: MQTT_BrokerConfig) -> mqtt.Client:
@@ -122,7 +131,8 @@ class MqttAgent(metaclass=Singleton):
 
 
     def publish_cv_image(self, topic, cv_image, retain=True):
-      # return image as mqtt message payload
+        # https://blog.51cto.com/u_15088375/5845886
+        # return image as mqtt message payload
         is_success, img_encode = cv2.imencode(".jpg", cv_image)
         if is_success:
             img_pub = img_encode.tobytes()
