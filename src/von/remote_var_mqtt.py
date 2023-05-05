@@ -3,10 +3,15 @@ from von.mqtt_agent import g_mqtt, g_mqtt_broker_config
 
 class RemoteVar_mqtt():
     def __init__(self, mqtt_topic: str, default_value):
+        '''
+        if default_value is not None:
+            g_mqtt.publish(mqtt_topic, default_value)
+        '''
         self.__mqtt_topic = mqtt_topic
         self.__value = default_value
-        self.__rx_buffer_has_been_renewed_flag = False
-        g_mqtt.publish(mqtt_topic, default_value)
+        self.__rx_buffer_has_been_updated = False
+        if default_value is not None:
+            g_mqtt.publish(mqtt_topic, default_value)
         g_mqtt.append_on_received_message_callback(self.__on_mqtt_agent_received_message)
         g_mqtt.subscribe(mqtt_topic)
 
@@ -14,19 +19,19 @@ class RemoteVar_mqtt():
         if new_value != self.__value:
             self.__value = new_value
             g_mqtt.publish(self.__mqtt_topic, new_value)
-            self.__rx_buffer_has_been_renewed_flag = False
+            self.__rx_buffer_has_been_updated = False
 
     def get(self):
-        self.__rx_buffer_has_been_renewed_flag = False
+        self.__rx_buffer_has_been_updated = False
         return self.__value
             
     def __on_mqtt_agent_received_message(self, mqtt_message_topic, mqtt_message_payload):
         if mqtt_message_topic == self.__mqtt_topic:
             self.__value = mqtt_message_payload
-            self.__rx_buffer_has_been_renewed_flag = True
+            self.__rx_buffer_has_been_updated = True
 
-    def rx_buffer_has_been_renewed(self) -> bool:
-        return self.__rx_buffer_has_been_renewed_flag
+    def rx_buffer_has_been_updated(self) -> bool:
+        return self.__rx_buffer_has_been_updated
 
 
     # def set_callback_on_sync_to_local(self, callback):
