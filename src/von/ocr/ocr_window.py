@@ -1,4 +1,4 @@
-from von.remote_var_mqtt import RemoteVar_mqtt
+from von.mqtt.remote_var_mqtt import RemoteVar_mqtt
 from von.logger import Logger
 
 import cv2
@@ -6,22 +6,18 @@ import numpy
 import pytesseract
 from PIL import Image #pip install pillow
 
-
-
-
 class OcrWindow:
 
-    def __init__(self, config,  mqtt_topic_of_image) -> None:
+    def __init__(self, config) -> None:
         '''
         Image source is mqtt-message
         '''
-        # self.__config = RemoteVar_mqtt(mqtt_topic_of_config, {})
-        self.__image = RemoteVar_mqtt(mqtt_topic_of_image, None)
+        self.__image_getter = RemoteVar_mqtt(config['mqtt_topic_of_screen_image'], None)
         self.__config = config
-        # self.__is_loaded = False  # Load image and config, backgroundly
 
         self.__all_units = []
-        self.__frame = numpy.zeros((1080,768,3), numpy.uint8)
+        width, height = 1024, 768
+        self.__frame = numpy.zeros((width, height,3), numpy.uint8)
 
     def show_config(self):
         # print(self.__config["areas"][1]['postions'])
@@ -33,7 +29,7 @@ class OcrWindow:
     def match_template(self, origin):
         method = cv2.TM_SQDIFF_NORMED
 
-        result = cv2.matchTemplate(self.__config["template_image"], origin, method)
+        result = cv2.matchTemplate(self.__config["marker_image"], origin, method)
         # We want the minimum squared difference
         mn,_,mnLoc,_ = cv2.minMaxLoc(result)
         # Draw the rectangle:
@@ -43,7 +39,7 @@ class OcrWindow:
         imshow = False
         if imshow:
             # Step 2: Get the size of the template. This is the same size as the match.
-            trows, tcols = self.__config.template_image.shape[:2]
+            trows, tcols = self.__config["marker_image"].shape[:2]
             # Step 3: Draw the rectangle on origin
             cv2.rectangle(origin, (MPx,MPy),(MPx+tcols,MPy+trows),(0,0,255),2)
             cv2.imshow('match template',origin)
@@ -51,11 +47,11 @@ class OcrWindow:
         return MPx, MPy
             
     def SpinOnce(self):
-        if not self.__image.rx_buffer_has_been_updated():
+        if not self.__image_getter.rx_buffer_has_been_updated():
             cv2.waitKey(1)
             return
 
-        np_array = numpy.frombuffer(self.__image.get(), dtype=numpy.uint8) 
+        np_array = numpy.frombuffer(self.__image_getter.get(), dtype=numpy.uint8) 
         self.__frame = cv2.imdecode(np_array, flags=1)
 
         debug = True

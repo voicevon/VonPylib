@@ -2,58 +2,77 @@ from von.ocr.ocr_unit import OcrUnit
 from von.ocr.ocr_window import OcrWindow
 
 from von.logger import Logger
-from von.remote_var_mqtt import RemoteVar_mqtt
+from von.mqtt.remote_var_mqtt import RemoteVar_mqtt
 
 import cv2
+import numpy
 import json
 
 
 class OcrFactory:
     
     @classmethod
-    def CreateKvmNodeConfig(cls, node_name:str):
+    def ListKvmNodes(cls):
+        all = ['kvm_230506',
+               'hdmi_230507',
+               
+               ]
+        return all
+    
+    @classmethod
+    def ListAppWindows(cls):
+        all = ['ubuntu_performance',
+
+            ]
+        return all
+
+
+
+    @classmethod
+    def CreateKvmNodeConfig(cls, kvm_node_name:str):
         config = {}
-        config['node_name'] = node_name
-        config['my_topic'] = 'ocr/' + node_name + '/config'
-        config['topic_of_screen_image'] = 'ocr/' + node_name + '/screen_image'
+        config['node_name'] = kvm_node_name
+        config['my_topic'] = 'ocr/kvm' + kvm_node_name + '/config'
+        config['topic_of_screen_image'] = 'ocr/' + kvm_node_name + '/screen_image'
         config['resolution'] = (1024,768)
         config['fps'] = 1
-        config['mode'] = 0  # 0=idle,  1=publish screen image 2=publish area image  3=publish ocr result
+        config['mode'] = 1  # 0=idle,  1=publish screen image 2=publish area image  3=publish ocr result
         return config
 
 
     @classmethod
-    def CreateOcrWindow(cls, window_name:str) -> OcrWindow:
+    def CreateOcrWindow(cls, kvm_node_name:str, app_window_name:str) -> OcrWindow:
         '''
-        Create ocr_window and config it.
-        Load config from mqtt
+        1. Load configuration from mqtt.
+        2. Create ocr_window with configuration.
         '''
-        if window_name == 'ubuntu_performance':
-            mqtt_topic_of_position_config = "ocr/" + window_name + "/config"
-            mqtt_topic_of_screen_image = "ocr/" + window_name + "/screen_image"
-            template_path_filename = "template_images/" + window_name + ".png"
 
-            positions_config = RemoteVar_mqtt(mqtt_topic_of_position_config, None)
-            # Logger.Print("OcrFactory::CreateOcrWindow()  point 31", '')
-            while not positions_config.rx_buffer_has_been_updated():
-                # wait mqtt syncing in the other thread.
-                pass
-            # Logger.Print("OcrFactory::CreateOcrWindow()  point 32", '')
+        # areas and positions
+        mqtt_topic_of_position_config = "ocr/app/" + app_window_name + "/config"
+        positions_config = RemoteVar_mqtt(mqtt_topic_of_position_config, None)
+        while not positions_config.rx_buffer_has_been_updated():
+            # wait mqtt syncing in the other thread.
+            pass
+        window_config = json.loads( positions_config.get())
 
-            window_config = json.loads( positions_config.get())
-            # Logger.Print("window_config", window_config)
-            window_config["template_image"] = cv2.imread(template_path_filename)
-            new_windows = OcrWindow(config = window_config, 
-                                    mqtt_topic_of_image = mqtt_topic_of_screen_image)
-            # Logger.Debug("OcrFactory::CreateOcrWindow() point 99")
-            # Logger.Print("window_name", window_name)
-            return new_windows
+        # screen image
+        window_config['mqtt_topic_of_screen_image'] = "ocr/kvm/" + kvm_node_name + "/screen_image"
+
+        # marker image
+        mqtt_topic_of_appwindow_marker_image = "ocr/app_window/" + app_window_name + "/marker"
+        marker_getter = RemoteVar_mqtt(mqtt_topic_of_appwindow_marker_image, None)
+        while not marker_getter.rx_buffer_has_been_updated():
+            pass
+        np_array = numpy.frombuffer(marker_getter.get(), dtype=numpy.uint8) 
+        window_config['marker_image'] = cv2.imdecode(np_array, flags=1)
         
-        else:
-            Logger.Error("OcrFactory::CreateOcrWindow()")
-            Logger.Print('requested window_name', window_name)
-            return None # type: ignore
-
+        # ready to create ocr_window
+        ocr_window = OcrWindow(config = window_config)
+        
+        Logger.Debug("OcrFactory::CreateOcrWindow() point 99")
+        Logger.Print("window_name", app_window_name)
+        return ocr_window
+        
     
 
     @classmethod
