@@ -130,13 +130,14 @@ class MqttAgent(metaclass=Singleton):
         self.RxBuffer.OnReceivedMessage(topic, "")
 
 
-    def publish_cv_image(self, topic, cv_image, retain=True):
+    def publish_cv_image(self, topic, cv_image, retain=True) ->int:
         # https://blog.51cto.com/u_15088375/5845886
-        # return image as mqtt message payload
+        # return bytes count
         is_success, img_encode = cv2.imencode(".jpg", cv_image)
         if is_success:
-            img_pub = img_encode.tobytes()
-            self.paho_mqtt_client.publish(topic, img_pub, retain=retain)
+            img_of_bytes = img_encode.tobytes()
+            self.paho_mqtt_client.publish(topic, img_of_bytes, retain=retain)
+            return len(img_of_bytes)
 
     def publish_file_image(self, topic, file_name, retain=True):
         with open(file_name, 'rb') as f:

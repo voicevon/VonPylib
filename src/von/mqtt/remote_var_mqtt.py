@@ -1,4 +1,4 @@
-from von.mqtt_agent import g_mqtt, g_mqtt_broker_config
+from von.mqtt.mqtt_agent import g_mqtt, g_mqtt_broker_config
 
 
 class RemoteVar_mqtt():
