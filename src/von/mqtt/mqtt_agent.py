@@ -101,19 +101,23 @@ class MqttAgent(metaclass=Singleton):
                 invoking(message.topic, message.payload)
         self.RxBuffer.OnReceivedMessage(message.topic, message.payload)
 
-    def connect_to_broker(self, config: MQTT_BrokerConfig) -> mqtt.Client:
+    def connect_to_broker(self, config: MQTT_BrokerConfig, blocked_connection=False) -> mqtt.Client:
         self.paho_mqtt_client = mqtt.Client(config.client_id)  # create new instance
         self.paho_mqtt_client.on_connect = self._on_phao_mqtt_client_connected_callback     # binding call back function 
         self.paho_mqtt_client.on_message = self.__on_received_mqtt_message
         self.paho_mqtt_client.username_pw_set(username=config.uid, password=config.password)
         self.paho_mqtt_client.connect(config.broker, port=config.port)
+        self.paho_mqtt_client.loop_start()
+        if blocked_connection:
+            while not self.paho_mqtt_client.is_connected():
+                pass
         if self.paho_mqtt_client.is_connected():
             print(self.__GREEN + '[Info]: MQTT has connected to: %s' % config.broker + self.__RESET)
         else:
             print(self.__RED + '[Warn]: MQTT has NOT!  connected to: %s, Is trying auto connect backgroundly.' % config.broker + self.__RESET)
 
         #self.paho_mqtt_client.loop_forever()
-        self.paho_mqtt_client.loop_start()
+        # self.paho_mqtt_client.loop_start()
         # self.paho_mqtt_client.loop_stop()
         return self.paho_mqtt_client
 
