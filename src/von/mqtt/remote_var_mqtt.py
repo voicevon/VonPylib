@@ -1,5 +1,7 @@
 from von.mqtt.mqtt_agent import g_mqtt, g_mqtt_broker_config
-
+import json
+import cv2
+import numpy
 
 class RemoteVar_mqtt():
     def __init__(self, mqtt_topic: str, default_value):
@@ -24,6 +26,16 @@ class RemoteVar_mqtt():
     def get(self):
         self.__rx_buffer_has_been_updated = False
         return self.__value
+    
+    def get_json(self):
+        self.__rx_buffer_has_been_updated = False
+        json_obj =  json.loads(self.__value)
+        return json_obj
+    
+    def get_cv_image(self):
+        self.__rx_buffer_has_been_updated = False
+        np_array = numpy.frombuffer(self.__value, dtype=numpy.uint8) 
+        return cv2.imdecode(np_array, flags=1)
             
     def __on_mqtt_agent_received_message(self, mqtt_message_topic, mqtt_message_payload):
         if mqtt_message_topic == self.__mqtt_topic:
