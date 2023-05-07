@@ -4,10 +4,13 @@ import cv2
 import numpy
 
 class RemoteVar_mqtt():
-    def __init__(self, mqtt_topic: str, default_value):
+    def __init__(self, mqtt_topic: str, default_value, for_loading_config=False):
         '''
         if default_value is not None:
             g_mqtt.publish(mqtt_topic, default_value)
+        # Notice our constraint:
+        when self.__for_loading_config, and no retained message in broker,
+        Will cause blocking.
         '''
         self.__mqtt_topic = mqtt_topic
         self.__value = default_value
@@ -16,6 +19,7 @@ class RemoteVar_mqtt():
             g_mqtt.publish(mqtt_topic, default_value)
         g_mqtt.append_on_received_message_callback(self.__on_mqtt_agent_received_message)
         g_mqtt.subscribe(mqtt_topic)
+        self.__for_loading_config = for_loading_config
 
     def set(self, new_value):
         if new_value != self.__value:
@@ -24,18 +28,28 @@ class RemoteVar_mqtt():
             self.__rx_buffer_has_been_updated = False
 
     def get(self):
+        '''
+        # Notice:
+        when self.__for_loading_config, and no retained message in broker,
+        Will cause blocking.
+        '''
+        if self.__for_loading_config:
+            while not self.__rx_buffer_has_been_updated:
+                #Wait for other thread to sync message
+                pass
+        has_been_updated = self.__rx_buffer_has_been_updated
         self.__rx_buffer_has_been_updated = False
-        return self.__value
+        return self.__value, has_been_updated
     
     def get_json(self):
-        self.__rx_buffer_has_been_updated = False
-        json_obj =  json.loads(self.__value)
-        return json_obj
+        value, has_been_updated = self.get()
+        json_obj =  json.loads(value)
+        return json_obj, has_been_updated
     
     def get_cv_image(self):
-        self.__rx_buffer_has_been_updated = False
-        np_array = numpy.frombuffer(self.__value, dtype=numpy.uint8) 
-        return cv2.imdecode(np_array, flags=1)
+        value, has_been_updated = self.get()
+        np_array = numpy.frombuffer(value, dtype=numpy.uint8) 
+        return cv2.imdecode(np_array, flags=1), has_been_updated
             
     def __on_mqtt_agent_received_message(self, mqtt_message_topic, mqtt_message_payload):
         if mqtt_message_topic == self.__mqtt_topic:

@@ -3,7 +3,7 @@ from von.terminal_font import TerminalFont
 
 class Logger():
     style = TerminalFont.Color.Control.reset
-
+    print_counter = 0
     @classmethod
     def Error(cls, title):
         print(TerminalFont.Color.Fore.yellow
@@ -35,7 +35,8 @@ class Logger():
 
     @classmethod
     def Print(cls, key, value):
-        print(cls.style , key , '\t=', value)
+        print(cls.style + '(' + str(cls.print_counter) + ')' , key , '\t=', value)
+        cls.print_counter += 1
 
 
 
