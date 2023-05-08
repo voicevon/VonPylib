@@ -47,6 +47,9 @@ class RemoteVar_mqtt():
         return json_obj, has_been_updated
     
     def get_cv_image(self):
+        if self.__value is None:
+            fake_image = numpy.zeros((100,100,3), dtype=numpy.uint8)
+            return fake_image, False
         value, has_been_updated = self.get()
         np_array = numpy.frombuffer(value, dtype=numpy.uint8) 
         return cv2.imdecode(np_array, flags=1), has_been_updated
