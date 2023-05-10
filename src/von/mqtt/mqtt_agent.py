@@ -1,6 +1,8 @@
 import paho.mqtt.client as mqtt
 import cv2
-import logging
+import uuid
+
+
 
 from von.singleton import Singleton
 from von.terminal_font import TerminalFont
@@ -11,7 +13,7 @@ class MQTT_BrokerConfig:
     port = 1883
     uid = 'von'
     password = 'von1970'
-    client_id = 'test_22111815'
+    client_id = str(uuid.getnode())  # mac_address
 
 class MqttAgent_ReceivedMessage():
     def __init__(self, topic, payload):
