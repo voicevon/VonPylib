@@ -1,3 +1,5 @@
+
+
 class MqttConfigableItem():
     topic = ''
     type = ''
@@ -7,6 +9,7 @@ class MqttConfigableItem():
         self.topic = topic
         self.type = type
         self.value = value
+
 
 class helper:
 
@@ -62,8 +65,6 @@ class helper:
                             print ('     --', attr_name, getattr(target_obj, attr_name)) 
                 else:
                     self.find_member(attr, target_type_name, space_len + 4)
-
-
 
 
 if __name__ == '__main__':
