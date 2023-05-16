@@ -1,2 +1,0 @@
-Uid:
-Password:
