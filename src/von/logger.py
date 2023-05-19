@@ -2,8 +2,9 @@ from von.terminal_font import TerminalFont
 
 
 class Logger():
-    style = TerminalFont.Color.Control.reset
-    print_counter = 0
+    __style = TerminalFont.Color.Control.reset
+    __print_counter = 0
+
     @classmethod
     def Error(cls, title):
         print(TerminalFont.Color.Fore.yellow
@@ -11,7 +12,7 @@ class Logger():
             + '[Error] ' + title
             + TerminalFont.Color.Control.reset
         )
-        cls.style = TerminalFont.Color.Fore.red
+        cls.__style = TerminalFont.Color.Fore.red
 
 
 
@@ -22,7 +23,7 @@ class Logger():
                 + '[Debug] ' + title 
                 + TerminalFont.Color.Control.reset)            
 
-        cls.style = TerminalFont.Color.Fore.purple
+        cls.__style = TerminalFont.Color.Fore.purple
 
     @classmethod
     def Info(cls, title):
@@ -31,12 +32,12 @@ class Logger():
             + '[Info] ' + title 
             + TerminalFont.Color.Background.black
             + TerminalFont.Color.Fore.yellow)
-        cls.style = TerminalFont.Color.Fore.green
+        cls.__style = TerminalFont.Color.Fore.green
 
     @classmethod
     def Print(cls, key, value):
-        print(cls.style + '(' + str(cls.print_counter) + ')' , key , '\t=', value)
-        cls.print_counter += 1
+        print(cls.__style + '(' + str(cls.__print_counter) + ')' , key , '\t=', value)
+        cls.__print_counter += 1
 
 
 
