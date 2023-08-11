@@ -160,10 +160,6 @@ g_amq_broker_config = AMQ_BrokerConfig()
 if __name__ == '__main__':
     g_amq.connect_to_broker(g_amq_broker_config)
 
-    # img = cv2.imread("nocommand.jpg")
-    # g_amq.publish_cv_image("test" , img)
-    # g_amq_broker_config.host = 'localhost'
-
     g_amq.Subscribe(queue_name='twh_deposit')
     g_amq.Subscribe(queue_name='twh_withdraw')
     count = 0

@@ -32,6 +32,7 @@ class MqttAgent_ReceivedDiction():
         return None
 
     def OnReceivedMessage(self, topic, payload):
+        # print("MqttAgent_ReceivedDiction::OnReceivedMessage()")
         item = self.FindItem(topic)
         if item is None:
             new_message = MqttAgent_ReceivedMessage(topic, payload)
@@ -150,8 +151,8 @@ class MqttAgent(metaclass=Singleton):
             byte_im = f.read()
         self.paho_mqtt_client.publish('sower/img/bin',byte_im )
 
-    def publish(self, topic, payload):
-        self.paho_mqtt_client.publish(topic, payload, qos=2, retain =True)
+    def publish(self, topic, payload, retain=True):
+        self.paho_mqtt_client.publish(topic, payload,  qos=2, retain=retain)
     
 
 g_mqtt_broker_config = MQTT_BrokerConfig()
